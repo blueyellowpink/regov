@@ -1,0 +1,57 @@
+version: '2'
+services:
+  indy_pool:
+    build:
+      context: .
+      dockerfile: indy-pool.dockerfile
+      args:
+        pool_ip: '10.0.0.2'
+    image: indy_pool
+    container_name: indy_pool
+    working_dir: /home/indy
+    ports:
+      - "9701:9701"
+      - "9702:9702"
+      - "9703:9703"
+      - "9704:9704"
+      - "9705:9705"
+      - "9706:9706"
+      - "9707:9707"
+      - "9708:9708"
+    networks:
+      pool_network:
+        ipv4_address: 10.0.0.2
+    volumes:
+       - sandbox:/var/lib/indy/sandbox/
+
+  indy_app:
+    build:
+      context: .
+      dockerfile: indy-app.dockerfile
+    # command: tail -F anything
+    command: python3 src/main.py
+    image: indy_app
+    container_name: indy_app
+    working_dir: /home/indy
+    volumes:
+       - ./src:/home/indy/src
+       - sandbox:/home/indy/sandbox
+    ports:
+      - "8888:8888"
+      - "5000:5000"
+    networks:
+      - pool_network
+    links:
+      - indy_pool
+
+networks:
+  pool_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: 10.0.0.0/24
+
+volumes:
+     sandbox:
